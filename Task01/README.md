@@ -1,16 +1,18 @@
 # Q1 – Linking, Loading and Address Binding
 
-Build:
-```bash
-gcc -Wall -Wextra -fPIC -shared crypto.c -o libcrypto_demo.so
-gcc -Wall -Wextra bank.c ./libcrypto_demo.so -Wl,-rpath,'$ORIGIN' -o bank_dynamic
-gcc -Wall -Wextra bank.c crypto.c -o bank_static_demo
-gcc -Wall -Wextra bank_dlopen.c -ldl -o bank_dlopen
-./bank_dynamic
-./bank_static_demo
-./bank_dlopen
-ls -lh bank_dynamic bank_static_demo
-ldd ./bank_dynamic
-```
+## Source files
+- `crypto.c`, `bank.c`: same application using an encryption-library function.
+- `bank_dlopen.c`: runtime loading with `dlopen()` and `dlsym()`.
+- `show_maps.c`: prints `/proc/self/maps`.
+- `build_and_measure.sh`: builds both linking styles, runs them, lists sizes/dependencies and samples startup time/RSS.
+- `replace_library_demo.sh`: replaces the shared object without relinking the application.
 
-Compare static and dynamic executable sizes, inspect dependencies, and test runtime loading. PIC allows shared-library code to be mapped at different virtual addresses. Capture real output and measurements from your machine; inspect `/proc/<pid>/maps` while the process is alive.
+## Run
+```bash
+sh build_and_measure.sh
+sh replace_library_demo.sh
+```
+For two process mappings, start two long-running copies and inspect their `/proc/PID/smaps` files. Compare `Shared_Clean` and `Private_Clean` fields; shared-library code pages can be shared when mapped read-only. To test a missing library, temporarily rename `libcrypto_demo.so`, run `./bank_dynamic`, then restore it.
+
+## Evaluation notes
+Static linking copies library code into the executable. Dynamic linking resolves a shared object at load time; `dlopen()` defers it until execution requests it. PIC enables relocation of shared code. Measure startup and memory on your own Linux machine and record actual output; do not assume one linking style is always faster.
