@@ -1,33 +1,55 @@
 #include <stdio.h>
 #include <stdbool.h>
-#define N 13
 #define MAXF 8
-static const int refs[N]={7,0,1,2,0,3,0,4,2,3,0,3,2};
-static int find(const int f[],int n,int p){for(int i=0;i<n;i++)if(f[i]==p)return i;return -1;}
-static int fifo(int c){
- int f[MAXF],n=0,next=0,x=0;
- for(int i=0;i<N;i++)if(find(f,n,refs[i])<0){x++;if(n<c)f[n++]=refs[i];else{f[next]=refs[i];next=(next+1)%c;}}
- return x;
+int find(const int f[],int n,int page){for(int i=0;i<n;i++)if(f[i]==page)return i;return -1;}
+int fifo(const int ref[],int len,int frames){
+ int f[MAXF],used=0,next=0,faults=0;
+ for(int i=0;i<len;i++){if(find(f,used,ref[i])>=0)continue;faults++;
+ if(used<frames)f[used++]=ref[i];else{f[next]=ref[i];next=(next+1)%frames;}}
+ return faults;
 }
-static int lru(int c){
- int f[MAXF],last[MAXF],n=0,x=0;
- for(int i=0;i<N;i++){int s=find(f,n,refs[i]);if(s>=0){last[s]=i;continue;}x++;
- if(n<c)s=n++;else{s=0;for(int j=1;j<n;j++)if(last[j]<last[s])s=j;}
- f[s]=refs[i];last[s]=i;}return x;
+int lru(const int ref[],int len,int frames){
+ int f[MAXF],last[MAXF],used=0,faults=0;
+ for(int i=0;i<len;i++){
+  int k=find(f,used,ref[i]);
+  if(k>=0){last[k]=i;continue;}
+  faults++;
+  if(used<frames)k=used++;
+  else{k=0;for(int j=1;j<used;j++)if(last[j]<last[k])k=j;}
+  f[k]=ref[i];last[k]=i;
+ }
+ return faults;
 }
-static int optimal(int c){
- int f[MAXF],n=0,x=0;
- for(int i=0;i<N;i++){if(find(f,n,refs[i])>=0)continue;x++;if(n<c){f[n++]=refs[i];continue;}
- int v=0,far=-1;for(int j=0;j<n;j++){int k=i+1;while(k<N&&refs[k]!=f[j])k++;if(k>far){far=k;v=j;}}f[v]=refs[i];}return x;
+int optimal(const int ref[],int len,int frames){
+ int f[MAXF],used=0,faults=0;
+ for(int i=0;i<len;i++){
+  if(find(f,used,ref[i])>=0)continue;faults++;
+  if(used<frames){f[used++]=ref[i];continue;}
+  int victim=0,farthest=-1;
+  for(int j=0;j<frames;j++){int next=len;for(int t=i+1;t<len;t++)if(ref[t]==f[j]){next=t;break;}
+   if(next>farthest){farthest=next;victim=j;}}
+  f[victim]=ref[i];
+ }
+ return faults;
 }
-static int clock_alg(int c){
- int f[MAXF],n=0,h=0,x=0;bool use[MAXF]={false};
- for(int i=0;i<N;i++){int s=find(f,n,refs[i]);if(s>=0){use[s]=true;continue;}x++;
- if(n<c){s=n++;f[s]=refs[i];use[s]=true;}else{while(use[h]){use[h]=false;h=(h+1)%c;}f[h]=refs[i];use[h]=true;h=(h+1)%c;}}
- return x;
+int clock_policy(const int ref[],int len,int frames){
+ int f[MAXF],used=0,hand=0,faults=0;bool bit[MAXF]={false};
+ for(int i=0;i<len;i++){
+  int k=find(f,used,ref[i]);if(k>=0){bit[k]=true;continue;}faults++;
+  if(used<frames){k=used++;f[k]=ref[i];bit[k]=true;}
+  else{while(bit[hand]){bit[hand]=false;hand=(hand+1)%frames;}
+   f[hand]=ref[i];bit[hand]=true;hand=(hand+1)%frames;}
+ }
+ return faults;
 }
 int main(void){
- const int counts[]={3,4};
- for(size_t i=0;i<2;i++){int c=counts[i];printf("Frames=%d | FIFO=%d | LRU=%d | Optimal=%d | Clock=%d\n",c,fifo(c),lru(c),optimal(c),clock_alg(c));}
+ int ref[]={7,0,1,2,0,3,0,4,2,3,0,3,2,1,2,0,1,7,0,1};
+ int len=(int)(sizeof ref/sizeof ref[0]);
+ for(int fr=3;fr<=4;fr++)
+  printf("%d frames: FIFO %d, LRU %d, Optimal %d, Clock %d\n",fr,
+   fifo(ref,len,fr),lru(ref,len,fr),optimal(ref,len,fr),clock_policy(ref,len,fr));
+ int belady[]={1,2,3,4,1,2,5,1,2,3,4,5};
+ printf("Belady string, FIFO: 3 frames %d faults, 4 frames %d faults\n",
+  fifo(belady,12,3),fifo(belady,12,4));
  return 0;
 }
