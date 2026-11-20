@@ -1,0 +1,38 @@
+TASK 7 - MEMORY MANAGEMENT EXPERIMENTAL RESULTS
+Student: Albin T V
+Register Number: 1924260177
+
+1. REAL-TIME MEMORY LOCKING
+mlockall(): success
+Iterations: 100000
+Worst observed loop body: 59401 ns
+Checksum: 2491552
+
+2. MEMORY LOCKING COMPARISON
+Before mlock(): 41325 ns
+After mlock(): 15844 ns
+Observed reduction: approximately 61.7%
+Iterations: 200000
+
+3. FIFO MEMORY SIMULATION
+Control task: 32 pages
+Machine-learning task: 384 pages
+Logging task: 16 pages
+Available frames: 128
+Total simulated page faults: 432
+
+4. MEMORY-BUDGET DESIGN
+Total physical memory: 2048 MB
+Real-time control reserve: 128 MB
+Logging reserve: 64 MB
+Kernel and operating system: 384 MB
+Safety reserve: 256 MB
+Maximum proposed ML budget: 1216 MB
+
+An additional 500 MB task must be rejected or deferred
+under this proposed allocation.
+
+NOTE:
+Observed loop delays are measurements from a test run,
+not certified worst-case execution-time guarantees.
+The FIFO program is a simplified teaching simulation.

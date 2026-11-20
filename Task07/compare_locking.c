@@ -21,7 +21,7 @@ int main(void){
  long ps=sysconf(_SC_PAGESIZE);if(ps<=0)return 1;
  for(size_t i=0;i<BYTES;i+=(size_t)ps)p[i]=0;
  run("Before mlock",p);
- if(mlock(p,BYTES)==0){run("After mlock",p);munlock(p,BYTES);}
+ if(mlock((const void *)p,BYTES)==0){run("After mlock",p);munlock((const void *)p,BYTES);}
  else printf("mlock failed: %s (check ulimit -l and permissions)\n",strerror(errno));
  free((void*)p);
  puts("These are observed maxima under this test, not certified WCET bounds.");

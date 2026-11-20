@@ -1,17 +1,43 @@
 #include <stdio.h>
 #include <math.h>
-int main(void){
- const double n=6.0,d=4.0,p=0.02;
- printf("Six disks of 4 TB each (nominal):\n");
- printf("RAID 0: %.1f TB usable; no disk-failure tolerance\n",n*d);
- printf("RAID 1 (six-way mirror): %.1f TB usable; survives up to five disk failures\n",d);
- printf("RAID 5: %.1f TB usable; survives one disk failure\n",(n-1)*d);
- printf("RAID 10 (three mirrored pairs): %.1f TB usable; survives one disk per mirror pair\n",(n/2)*d);
- printf("Assumed independent per-drive failure probability p=%.2f over one chosen interval\n",p);
- double loss1=pow(p,n);
- double loss5=1.0-pow(1.0-p,n)-n*p*pow(1.0-p,n-1);
- printf("RAID 1 six-way mirror data-loss probability (all six fail): %.8f (%.6f%%)\n",loss1,100*loss1);
- printf("RAID 5 data-loss probability (2 or more of 6 drives fail): %.8f (%.6f%%)\n",loss5,100*loss5);
- puts("Assumptions: independent equal failure probabilities, same interval, equal-size disks; real failures can be correlated.");
- return 0;
+
+int main(void)
+{
+    const int drives = 6;
+    const double drive_capacity = 4.0;
+    const double p = 0.02;
+
+    double raid0 = drives * drive_capacity;
+    double raid1 = drive_capacity;
+    double raid5 = (drives - 1) * drive_capacity;
+    double raid10 = (drives / 2) * drive_capacity;
+
+    double raid1_loss = pow(p, drives);
+    double raid5_loss = 1.0 - pow(1.0 - p, drives)
+                        - drives * p * pow(1.0 - p, drives - 1);
+
+    printf("SIX-DISK RAID CAPACITY COMPARISON\n");
+    printf("--------------------------------\n");
+    printf("Number of drives: %d\n", drives);
+    printf("Capacity per drive: %.0f TB\n\n", drive_capacity);
+
+    printf("RAID 0  usable capacity: %.0f TB\n", raid0);
+    printf("RAID 1  usable capacity: %.0f TB (six-way mirror)\n", raid1);
+    printf("RAID 5  usable capacity: %.0f TB\n", raid5);
+    printf("RAID 10 usable capacity: %.0f TB\n\n", raid10);
+
+    printf("DISK FAILURE PROBABILITY ANALYSIS\n");
+    printf("---------------------------------\n");
+    printf("Assumed independent drive failure probability: %.2f%%\n\n",
+           p * 100);
+
+    printf("RAID 1 data-loss probability (all six drives fail):\n");
+    printf("%.12e (%.12e%%)\n\n", raid1_loss, raid1_loss * 100);
+
+    printf("RAID 5 data-loss probability (two or more drives fail):\n");
+    printf("%.12e (%.6f%%)\n", raid5_loss, raid5_loss * 100);
+
+    printf("\nNote: RAID is not a substitute for backup.\n");
+
+    return 0;
 }
